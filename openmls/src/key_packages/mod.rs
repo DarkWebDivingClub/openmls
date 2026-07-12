@@ -108,7 +108,8 @@ use crate::{
     versions::ProtocolVersion,
 };
 use openmls_traits::{
-    crypto::OpenMlsCrypto, signatures::Signer, storage::StorageProvider, types::Ciphersuite,
+    crypto::OpenMlsCrypto, signatures::Signer, storage::StorageProvider,
+    types::{Ciphersuite, HpkeKeyPair},
 };
 use serde::{Deserialize, Serialize};
 use tls_codec::{
@@ -321,6 +322,45 @@ impl KeyPackage {
         })
     }
 
+    /// Create a key package using a pre-generated HPKE init keypair.
+    ///
+    /// Same as [`KeyPackage::create`] but skips internal random key generation,
+    /// using the supplied keypair instead.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn create_from_keypair(
+        ciphersuite: Ciphersuite,
+        provider: &impl OpenMlsProvider,
+        signer: &impl Signer,
+        credential_with_key: CredentialWithKey,
+        lifetime: Lifetime,
+        extensions: Extensions<KeyPackage>,
+        leaf_node_capabilities: Capabilities,
+        leaf_node_extensions: Extensions<LeafNode>,
+        init_keypair: HpkeKeyPair,
+    ) -> Result<KeyPackageCreationResult, KeyPackageNewError> {
+        if ciphersuite.signature_algorithm() != signer.signature_scheme() {
+            return Err(KeyPackageNewError::CiphersuiteSignatureSchemeMismatch);
+        }
+
+        let (key_package, encryption_keypair) = Self::new_from_keys(
+            ciphersuite,
+            provider,
+            signer,
+            credential_with_key,
+            lifetime,
+            extensions,
+            leaf_node_capabilities,
+            leaf_node_extensions,
+            init_keypair.public.into(),
+        )?;
+
+        Ok(KeyPackageCreationResult {
+            key_package,
+            encryption_keypair,
+            init_private_key: init_keypair.private,
+        })
+    }
+
     /// Create a new key package for the given `ciphersuite` and `identity`.
     ///
     /// The HPKE init key must have been generated before and the private part
@@ -449,6 +489,7 @@ pub struct KeyPackageBuilder {
     leaf_node_capabilities: Option<Capabilities>,
     leaf_node_extensions: Option<Extensions<LeafNode>>,
     last_resort: bool,
+    init_keypair: Option<HpkeKeyPair>,
 }
 
 impl KeyPackageBuilder {
@@ -460,6 +501,7 @@ impl KeyPackageBuilder {
             leaf_node_capabilities: None,
             leaf_node_extensions: None,
             last_resort: false,
+            init_keypair: None,
         }
     }
 
@@ -492,6 +534,16 @@ impl KeyPackageBuilder {
     /// Returns an error if one or more of the extensions is invalid in leaf nodes.
     pub fn leaf_node_extensions(mut self, extensions: Extensions<LeafNode>) -> Self {
         self.leaf_node_extensions.replace(extensions);
+        self
+    }
+
+    /// Supply a pre-generated HPKE init keypair.
+    ///
+    /// When set, the builder uses this keypair instead of generating a random
+    /// one internally. This allows HSM/vault-backed key management where HPKE
+    /// private keys never leave the secure element.
+    pub fn init_keypair(mut self, keypair: HpkeKeyPair) -> Self {
+        self.init_keypair = Some(keypair);
         self
     }
 
@@ -548,16 +600,30 @@ impl KeyPackageBuilder {
             key_package,
             encryption_keypair,
             init_private_key,
-        } = KeyPackage::create(
-            ciphersuite,
-            provider,
-            signer,
-            credential_with_key,
-            self.key_package_lifetime.unwrap_or_default(),
-            self.key_package_extensions.unwrap_or_default(),
-            self.leaf_node_capabilities.unwrap_or_default(),
-            self.leaf_node_extensions.unwrap_or_default(),
-        )?;
+        } = if let Some(init_keypair) = self.init_keypair {
+            KeyPackage::create_from_keypair(
+                ciphersuite,
+                provider,
+                signer,
+                credential_with_key,
+                self.key_package_lifetime.unwrap_or_default(),
+                self.key_package_extensions.unwrap_or_default(),
+                self.leaf_node_capabilities.unwrap_or_default(),
+                self.leaf_node_extensions.unwrap_or_default(),
+                init_keypair,
+            )?
+        } else {
+            KeyPackage::create(
+                ciphersuite,
+                provider,
+                signer,
+                credential_with_key,
+                self.key_package_lifetime.unwrap_or_default(),
+                self.key_package_extensions.unwrap_or_default(),
+                self.leaf_node_capabilities.unwrap_or_default(),
+                self.leaf_node_extensions.unwrap_or_default(),
+            )?
+        };
 
         // Store the key package in the key store with the hash reference as id
         // for retrieval when parsing welcome messages.
