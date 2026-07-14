@@ -1,6 +1,7 @@
 use std::slice::from_ref;
 
 use openmls_basic_credential::SignatureKeyPair;
+use openmls_traits::types::HpkeKeyPurpose;
 use tls_codec::{Deserialize, Serialize};
 
 use crate::{
@@ -239,6 +240,7 @@ fn test_welcome_message() {
             Secret::random(ciphersuite, provider.rand())
                 .expect("Not enough randomness.")
                 .as_slice(),
+            HpkeKeyPurpose::InitKey,
         )
         .expect("Error deriving receiver key pair");
     let hpke_context = b"group info welcome test info";

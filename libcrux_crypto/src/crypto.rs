@@ -5,7 +5,7 @@ use std::sync::{Mutex, MutexGuard};
 use openmls_traits::crypto::OpenMlsCrypto;
 use openmls_traits::types::{
     AeadType, Ciphersuite, CryptoError, ExporterSecret, HashType, HpkeAeadType, HpkeCiphertext,
-    HpkeConfig, HpkeKdfType, HpkeKemType, HpkeKeyPair, KemOutput, SignatureScheme,
+    HpkeConfig, HpkeKdfType, HpkeKemType, HpkeKeyPair, HpkeKeyPurpose, KemOutput, SignatureScheme,
 };
 
 use rand::{rngs::OsRng, rngs::ReseedingRng, CryptoRng, RngCore};
@@ -359,6 +359,7 @@ impl OpenMlsCrypto for CryptoProvider {
         &self,
         config: HpkeConfig,
         ikm: &[u8],
+        _purpose: HpkeKeyPurpose,
     ) -> Result<HpkeKeyPair, CryptoError> {
         let config = hpke_config(config);
 

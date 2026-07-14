@@ -6,7 +6,7 @@
 use hash_ref::HashReference;
 use openmls_traits::{
     crypto::OpenMlsCrypto,
-    types::{Ciphersuite, HpkeCiphertext, HpkeKeyPair},
+    types::{Ciphersuite, HpkeCiphertext, HpkeKeyPair, HpkeKeyPurpose},
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -370,7 +370,7 @@ impl PathSecret {
             .kdf_expand_label(crypto, ciphersuite, "node", &[], ciphersuite.hash_length())
             .map_err(LibraryError::unexpected_crypto_error)?;
         let HpkeKeyPair { public, private } = crypto
-            .derive_hpke_keypair(ciphersuite.hpke_config(), node_secret.as_slice())
+            .derive_hpke_keypair(ciphersuite.hpke_config(), node_secret.as_slice(), HpkeKeyPurpose::PathSecret)
             .map_err(LibraryError::unexpected_crypto_error)?;
 
         Ok((HpkePublicKey::from(public), private).into())

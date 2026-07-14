@@ -406,6 +406,7 @@ impl OpenMlsCrypto for RustCrypto {
         &self,
         config: HpkeConfig,
         ikm: &[u8],
+        _purpose: types::HpkeKeyPurpose,
     ) -> Result<types::HpkeKeyPair, CryptoError> {
         let kp = hpke_from_config(config)
             .derive_key_pair(ikm)

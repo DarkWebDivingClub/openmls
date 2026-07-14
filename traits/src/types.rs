@@ -275,6 +275,23 @@ impl std::ops::Deref for HpkePrivateKey {
     }
 }
 
+/// The purpose of an HPKE keypair derivation.
+///
+/// Allows the crypto provider to distinguish what type of key is being
+/// derived, enabling vault-backed implementations to route each purpose
+/// to a separate derivation path.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HpkeKeyPurpose {
+    /// KeyPackage init key (Welcome decryption).
+    InitKey,
+    /// LeafNode encryption key (UpdatePath).
+    EncryptionKey,
+    /// Tree node key from path secret.
+    PathSecret,
+    /// External commit / external pub extension.
+    ExternalPub,
+}
+
 /// Helper holding a (private, public) key pair as byte vectors.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HpkeKeyPair {

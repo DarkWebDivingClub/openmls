@@ -40,7 +40,7 @@ impl ExternalPubExtension {
 #[cfg(test)]
 mod test {
     use crate::test_utils::OpenMlsRustCrypto;
-    use openmls_traits::{crypto::OpenMlsCrypto, types::Ciphersuite, OpenMlsProvider};
+    use openmls_traits::{crypto::OpenMlsCrypto, types::{Ciphersuite, HpkeKeyPurpose}, OpenMlsProvider};
     use tls_codec::{Deserialize, Serialize};
 
     use super::*;
@@ -66,6 +66,7 @@ mod test {
                                 &Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519,
                             ),
                             ikm.as_slice(),
+                            HpkeKeyPurpose::ExternalPub,
                         ).expect("error deriving hpke key pair");
                         init_key.public
                     };

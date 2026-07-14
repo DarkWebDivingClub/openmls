@@ -1,6 +1,6 @@
 //! Unit tests for the ciphersuites.
 
-use openmls_traits::types::HpkeCiphertext;
+use openmls_traits::types::{HpkeCiphertext, HpkeKeyPurpose};
 
 use crate::ciphersuite::*;
 
@@ -17,6 +17,7 @@ fn test_hpke_seal_open() {
             Secret::random(ciphersuite, provider.rand())
                 .expect("Not enough randomness.")
                 .as_slice(),
+            HpkeKeyPurpose::InitKey,
         )
         .expect("error deriving hpke key pair");
     let ciphertext = hpke::encrypt_with_label(
@@ -96,6 +97,7 @@ fn test_safe_hpke_seal_open() {
             Secret::random(ciphersuite, provider.rand())
                 .expect("Not enough randomness.")
                 .as_slice(),
+            HpkeKeyPurpose::InitKey,
         )
         .expect("error deriving hpke key pair");
 

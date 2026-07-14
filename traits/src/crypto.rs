@@ -6,7 +6,7 @@ use tls_codec::SecretVLBytes;
 
 use crate::types::{
     AeadType, Ciphersuite, CryptoError, ExporterSecret, HashType, HpkeCiphertext, HpkeConfig,
-    HpkeKeyPair, KemOutput, SignatureScheme,
+    HpkeKeyPair, HpkeKeyPurpose, KemOutput, SignatureScheme,
 };
 
 pub trait OpenMlsCrypto: Send + Sync {
@@ -151,9 +151,14 @@ pub trait OpenMlsCrypto: Send + Sync {
     ) -> Result<ExporterSecret, CryptoError>;
 
     /// Derive a new HPKE keypair from a given input key material.
+    ///
+    /// The `purpose` parameter indicates what the key will be used for,
+    /// allowing vault-backed providers to route each purpose to a separate
+    /// derivation path.
     fn derive_hpke_keypair(
         &self,
         config: HpkeConfig,
         ikm: &[u8],
+        purpose: HpkeKeyPurpose,
     ) -> Result<HpkeKeyPair, CryptoError>;
 }

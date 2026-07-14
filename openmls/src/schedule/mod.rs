@@ -813,7 +813,7 @@ impl ExternalSecret {
         crypto: &impl OpenMlsCrypto,
         ciphersuite: Ciphersuite,
     ) -> Result<HpkeKeyPair, CryptoError> {
-        crypto.derive_hpke_keypair(ciphersuite.hpke_config(), self.secret.as_slice())
+        crypto.derive_hpke_keypair(ciphersuite.hpke_config(), self.secret.as_slice(), HpkeKeyPurpose::ExternalPub)
     }
 
     #[cfg(any(feature = "test-utils", test))]

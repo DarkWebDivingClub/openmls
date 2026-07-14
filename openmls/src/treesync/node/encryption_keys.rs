@@ -4,7 +4,7 @@ use openmls_traits::{
     crypto::OpenMlsCrypto,
     random::OpenMlsRand,
     storage::{StorageProvider as StorageProviderTrait, CURRENT_VERSION},
-    types::{Ciphersuite, HpkeCiphertext, HpkeKeyPair},
+    types::{Ciphersuite, HpkeCiphertext, HpkeKeyPair, HpkeKeyPurpose},
 };
 use serde::{Deserialize, Serialize};
 use tls_codec::{TlsDeserialize, TlsDeserializeBytes, TlsSerialize, TlsSize, VLBytes};
@@ -213,7 +213,7 @@ impl EncryptionKeyPair {
         let ikm =
             Secret::random(ciphersuite, rand).map_err(LibraryError::unexpected_crypto_error)?;
         Ok(crypto
-            .derive_hpke_keypair(ciphersuite.hpke_config(), ikm.as_slice())
+            .derive_hpke_keypair(ciphersuite.hpke_config(), ikm.as_slice(), HpkeKeyPurpose::EncryptionKey)
             .map_err(LibraryError::unexpected_crypto_error)?
             .into())
     }

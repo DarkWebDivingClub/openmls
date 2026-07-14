@@ -7,6 +7,7 @@ use mls_group::{
 use openmls_basic_credential::SignatureKeyPair;
 use openmls_test::openmls_test;
 use openmls_traits::storage::CURRENT_VERSION;
+use openmls_traits::types::HpkeKeyPurpose;
 use signable::Signable;
 use tls_codec::{Deserialize, Serialize};
 
@@ -2518,6 +2519,7 @@ fn failed_groupinfo_decryption() {
             Secret::random(ciphersuite, provider.rand())
                 .expect("Not enough randomness.")
                 .as_slice(),
+            HpkeKeyPurpose::InitKey,
         )
         .expect("error deriving receiver hpke key pair");
     let hpke_context = b"group info welcome test info";
